@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
+import { Card, CardContent } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
+import { RadioGroup, RadioGroupItem } from "./components/ui/radio-group";
+import { Textarea } from "./components/ui/textarea";
+import { Slider } from "./components/ui/slider";
 
 const Quiz = () => {
   const [questions, setQuestions] = useState([]);
@@ -13,13 +13,11 @@ const Quiz = () => {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    // Fetch questions from a public Google Sheet published as CSV
-    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vQD8mxUlSHZj-O96BT01vcaugxOdmVIsXr7hW1H-o7BquZ47jqp1EfyIPohdsqB-g7o7SWOToJW8d9m/pub?gid=965635019&single=true&output=csv")
+    fetch(
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQD8mxUlSHZj-O96BT01vcaugxOdmVIsXr7hW1H-o7BquZ47jqp1EfyIPohdsqB-g7o7SWOToJW8d9m/pub?gid=965635019&single=true&output=csv"
+    )
       .then((response) => response.text())
-      .then((data) => {
-        const parsedQuestions = parseCSV(data);
-        setQuestions(parsedQuestions);
-      });
+      .then((data) => setQuestions(parseCSV(data)));
   }, []);
 
   const parseCSV = (data) => {
@@ -53,7 +51,6 @@ const Quiz = () => {
   };
 
   if (!questions.length) return <p>Loading quiz...</p>;
-
   if (submitted) return <p>Thank you! Your personalised product recommendations are on the way.</p>;
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -62,6 +59,7 @@ const Quiz = () => {
     <Card className="max-w-xl mx-auto p-4">
       <CardContent>
         <h2 className="text-xl font-semibold mb-4">{currentQuestion.question}</h2>
+
         {currentQuestion.type === "single choice" && (
           <RadioGroup onValueChange={handleAnswer}>
             {currentQuestion.options.split(";").map((option) => (
@@ -73,10 +71,16 @@ const Quiz = () => {
         {currentQuestion.type === "multiple choice" && (
           <div>
             {currentQuestion.options.split(";").map((option) => (
-              <label key={option} className="block">
+              <label key={option} className="block my-2">
                 <Input
                   type="checkbox"
-                  onChange={(e) => handleAnswer(e.target.checked ? option : "")}
+                  onChange={(e) =>
+                    handleAnswer(
+                      e.target.checked
+                        ? [...(answers[currentQuestion.id] || []), option]
+                        : (answers[currentQuestion.id] || []).filter((o) => o !== option)
+                    )
+                  }
                 />
                 {option}
               </label>
@@ -85,25 +89,14 @@ const Quiz = () => {
         )}
 
         {currentQuestion.type === "likert scale" && (
-          <Slider
-            min={1}
-            max={5}
-            step={1}
-            onValueChange={handleAnswer}
-            className="mt-4"
-          />
+          <Slider min={1} max={5} step={1} onValueChange={handleAnswer} className="mt-4" />
         )}
 
         {currentQuestion.type === "open text" && (
-          <Textarea
-            placeholder="Type your answer..."
-            onBlur={(e) => handleAnswer(e.target.value)}
-          />
+          <Textarea placeholder="Type your answer..." onBlur={(e) => handleAnswer(e.target.value)} />
         )}
 
-        <Button className="mt-4" onClick={() => handleAnswer(null)}>
-          Next
-        </Button>
+        <Button className="mt-4" onClick={() => handleAnswer(null)}>Next</Button>
       </CardContent>
     </Card>
   );
